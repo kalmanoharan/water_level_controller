@@ -1,0 +1,86 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+#include "NewPing.h"
+
+
+// defines pins numbers
+
+#define TRIGGER_PIN  2
+#define ECHO_PIN     3
+#define MAX_DISTANCE 400
+
+
+const int pushbutton = 4;
+
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+float duration, distance;
+
+
+// defines variables
+//long duration;
+//int distance;
+int value = 0;
+const byte rxAddr[][6] = {"00001", "00002"};
+boolean userreq = 0;
+RF24 radio(9,10);                          //Creating an object
+
+
+void setup()
+{
+  pinMode(pushbutton, INPUT); //sets the pusbutton as input
+  Serial.begin(9600); // Starts the serial communication
+  
+  radio.begin();
+  radio.setRetries(15, 15);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.openWritingPipe(rxAddr[1]);
+  radio.openReadingPipe(0, rxAddr[0]);
+  
+}
+
+void loop() {
+  delay(5);
+  radio.stopListening(); //switch the modem to data transmission mode.
+  value = digitalRead(pushbutton);
+  if (value)
+  {
+    distance = sonar.ping_cm();
+    if (distance == 0) // resetting the sensor if we didn't get an ECHO back, we will get zero
+    {
+      delay(100);
+      pinMode(echoPin, OUTPUT);
+      digitalWrite(echoPin, LOW);
+      delay(100);
+      pinMode(echoPin, INPUT);
+      Serial.print("Resetting the sensor! ");
+    }
+    radio.write(&distance, sizeof(distance));
+    Serial.print("Data TX status: ");
+    Serial.println("DONE");
+    }
+  
+  delay(5);
+  radio.startListening();
+  while (!radio.available());
+  radio.read(&userreq, sizeof(userreq));
+  if (userreq == HIGH) {
+    Serial.println("recived inteerupt");
+    distance = sonar.ping_cm();
+    //Serial.println(dist);
+    if (distance == 0) // resetting the sensor if we didn't get an ECHO back, we will get zero
+    {
+      delay(100);
+      pinMode(echoPin, OUTPUT);
+      digitalWrite(echoPin, LOW);
+      delay(100);
+      pinMode(echoPin, INPUT);
+      Serial.print("Resetting the sensor! ");
+    }
+    radio.stopListening(); 
+    radio.write(&distance, sizeof(distance));
+    Serial.print("Data TX status: ");
+    Serial.println("DONE");
+    }
+ 
+ }
