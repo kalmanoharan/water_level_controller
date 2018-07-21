@@ -2,7 +2,7 @@
 #include "nRF24L01.h"
 #include "RF24.h"                          //library to control radio modem
 
-#define button 4 // pin 4 for user request state
+#define motor 4 // pin 4 for user request state
  
 RF24 radio(9,10);                          //Creating an object
 boolean userreq = 0;
@@ -11,7 +11,7 @@ const byte rxAddr[][6] = {"00001", "00002"};
 
 void setup()
 {
-  pinMode(button, INPUT);
+  pinMode(motor, OUTPUT);
   while (!Serial);
   Serial.begin(9600);
   
@@ -28,6 +28,10 @@ void setup()
 
 void loop()
 {
+  //delay(1000);
+  //digitalRead(motor);
+  //Serial.println("Motor status");
+  //Serial.println(digitalRead(motor));
   delay(5);
   radio.startListening(); //switch the modem to data Receiving mode.
   //Serial.println(radio.available());
@@ -36,6 +40,16 @@ void loop()
     Serial.println("Data Received");
     float water_level = 0;
     radio.read(&water_level, sizeof(water_level));
+    if ( water_level <= 20) {
+      digitalWrite(motor, HIGH);
+    }
+    else if ( water_level >= 20 && water_level <= 80) {
+      //water is filling fast and motor is running
+    }
+    else if ( water_level >= 80){
+      digitalWrite(motor, LOW); // Turn off the motor
+    }
+    
     Serial.println(water_level);
   }
   
