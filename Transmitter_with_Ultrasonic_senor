@@ -85,5 +85,15 @@ void check_sensor_transmit()
   radio.write(&distance, sizeof(distance));
   Serial.print("Data TX based on timer: ");
   Serial.println("DONE");
+  if (distance <= 20)
+  { 
+    while ( distance <= 20 && distance <= 80 )
+     { distance = check_sensor();
+       delay(10000);
+       radio.write(&distance, sizeof(distance));
+       Serial.print("Data TX based on While: ");
+       Serial.println("DONE"); 
+     }
+  }
  }
 
